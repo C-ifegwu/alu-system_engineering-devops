@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# This script installs nginx, configures it to serve a page containing "Holberton School for the win!", and restarts nginx.
+# This script installs nginx on an Ubuntu machine, removes any default index files, creates a custom index page containing "Holberton School for the win!", and restarts nginx using the service command.
+
 apt-get update -y
 apt-get install -y nginx
 
-# Create a custom index page with the required string
-echo "Holberton School for the win!" > /var/www/html/index.nginx-debian.html
+# Remove default index files (if any)
+rm -f /var/www/html/index.nginx-debian.html
+rm -f /var/www/html/index.html
 
-# Restart nginx using service (not systemctl)
+# Create a new index page with the required content
+echo "Holberton School for the win!" > /var/www/html/index.html
+
+# Restart nginx using the service command (do not use systemctl)
 service nginx restart
