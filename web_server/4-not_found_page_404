@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-# This script configures nginx to use a custom 404 page that returns "Ceci n'est pas une page" with an HTTP 404 status.
-NGINX_CONF="/etc/nginx/sites-available/default"
-cp "$NGINX_CONF" "${NGINX_CONF}.bak2"
+#Configures Nginx server to have a custom 404 page that contains the string
 
-# Create the custom 404 page
-echo "Ceci n'est pas une page" > /var/www/html/404.html
+sudo apt-get update
+sudo apt-get -y install nginx
+sudo ufw allow 'Nginx HTTP'
+echo "This is Oreste from Holberton School :)" | sudo tee /var/www/html/index.html > /dev/null
 
-# Insert the error_page directive and location block into the server block
-sed -i '/server {/a \
-    error_page 404 /404.html;\
-    location = /404.html {\
-        internal;\
-    }' "$NGINX_CONF"
+# codes to redirect a specific endpoint (eg: redirect /redirect_me to https://www.github.com/oreste-abizera)
+string_for_replacement="server_name _;\n\trewrite ^\/redirect_me https:\/\/www.github.com\/oreste-abizera permanent;"
+sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
 
-# Restart nginx using the service command
-service nginx restart
+# codes to create error page and add a redirect for error 404
+echo "Ceci n'est pas une page" | sudo tee /var/www/html/404.html > /dev/null
+string_for_replacement="listen 80 default_server;\n\terror_page 404 \/404.html;\n\tlocation = \/404.html {\n\t\troot \/var\/www\/html;\n\t\tinternal;\n\t}"
+sudo sed -i "s/listen 80 default_server;/$string_for_replacement/" /etc/nginx/sites-enabled/default
+
+sudo service nginx restart

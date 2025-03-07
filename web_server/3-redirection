@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# This script configures nginx to redirect /redirect_me/ to a specific URL with a 301 Moved Permanently response.
-NGINX_CONF="/etc/nginx/sites-available/default"
-cp "$NGINX_CONF" "${NGINX_CONF}.bak"
+# Script that configures a new Ubuntu machine with the following requirements:
 
-# Insert the location block after the first occurrence of "server {"
-sed -i '/server {/a \
-    location /redirect_me/ {\
-        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;\
-    }' "$NGINX_CONF"
+sudo apt-get update
+sudo apt-get -y install nginx
+sudo ufw allow 'Nginx HTTP'
+echo "This is Oreste from Holberton School :)" | sudo tee /var/www/html/index.html > /dev/null
 
-# Restart nginx using the service command
-service nginx restart
+string_for_replacement="server_name _;\n\trewrite ^\/redirect_me https:\/\/www.github.com\/oreste-abizera permanent;"
+sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
+
+sudo service nginx restart
