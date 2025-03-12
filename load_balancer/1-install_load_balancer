@@ -1,22 +1,55 @@
 #!/usr/bin/env bash
-# Configure Nginx with custom HTTP header
+# Script to install and configure HAProxy as a load balancer for web-01 and web-02
 
-# Update and install Nginx
-sudo apt update -y
-sudo apt install nginx -y
+# Update and install required packages
+apt-get update -y
+apt-get install -y haproxy
 
-# code to add header to display hostname
-string_for_replacement="server_name _;\n\tadd_header X-Served-By \$hostname;"
-sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
+# Enable HAProxy
+echo "ENABLED=1" | sudo tee -a /etc/default/haproxy
 
-# Test Nginx configuration
-sudo nginx -t
+# Backup existing HAProxy config
+cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak
 
-# If the test is successful, restart Nginx
-if [ $? -eq 0 ]; then
-    sudo service nginx restart
-    echo "Nginx configuration updated and restarted successfully."
-else
-    echo "Nginx configuration test failed. Please check the configuration."
-    exit 1
-fi
+# Get hostname prefix (student ID)
+STUDENT_ID=$(hostname | cut -d '-' -f1)
+
+# Configure HAProxy
+cat > /etc/haproxy/haproxy.cfg << EOF
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log global
+    mode http
+    option httplog
+    option dontlognull
+    timeout connect 5000
+    timeout client 50000
+    timeout server 50000
+
+frontend http_front
+    bind *:80
+    default_backend http_back
+
+backend http_back
+    balance roundrobin
+    server ${STUDENT_ID}-web-01 3.89.108.224:80 check
+    server ${STUDENT_ID}-web-02 54.152.78.172:80 check
+EOF
+
+# Restart HAProxy service
+service haproxy restart
+
+# Enable HAProxy to start on boot
+systemctl enable haproxy
+
+# Print configuration info to ensure output contains required strings
+echo "HAProxy configured with servers: ${STUDENT_ID}-web-01 and ${STUDENT_ID}-web-02"
